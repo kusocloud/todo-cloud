@@ -19,18 +19,26 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY
 )
 
-// ===== 驗證 =====
-function auth(req, res, next) {
-  const token = req.cookies.token
-  if (!token) return res.status(401).json({ error: "未登入" })
+// ===== Supabase 驗證 =====
+async function auth(req, res, next) {
+  const authHeader = req.headers.authorization;
 
-  try {
-    jwt.verify(token, SECRET)
-    next()
-  } catch {
-    res.status(401).json({ error: "登入過期" })
+  if (!authHeader) {
+    return res.status(401).json({ error: "未提供 token" });
   }
+
+  const token = authHeader.replace("Bearer ", "");
+
+  const { data, error } = await supabase.auth.getUser(token);
+
+  if (error || !data.user) {
+    return res.status(401).json({ error: "無效 token" });
+  }
+
+  req.user = data.user; // 把 user 掛上去
+  next();
 }
+
 
 // ===== 登入 =====
 app.post("/login", (req, res) => {
