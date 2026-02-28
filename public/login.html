@@ -21,27 +21,32 @@ button { padding:8px 12px }
 <button id="loginBtn">登入</button>
 </div>
 
-<script>
-async function checkLogin() {
-  const res = await fetch('/me', { credentials: 'include' })
-  if (res.ok) window.location.href = '/'
-}
-checkLogin()
+<script type="module">
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
 
-document.getElementById("loginBtn").addEventListener("click", async () => {
+const supabase = createClient(
+  "https://uecxxpazkyfcrqswzbqm.supabase.co",
+  "sb_publishable_Oc7KChg0knc-osKuDrxNmQ_XWAyrGsm"
+)
+
+const form = document.querySelector("form")
+
+form.addEventListener("submit", async (e) => {
+  e.preventDefault()
+
   const email = document.getElementById("email").value
   const password = document.getElementById("password").value
 
-  const res = await fetch('/login', {
-    method:'POST',
-    headers:{'Content-Type':'application/json'},
-    credentials:'include',
-    body:JSON.stringify({email,password})
+  const { error } = await supabase.auth.signInWithPassword({
+    email,
+    password,
   })
 
-  if(!res.ok) return alert("登入失敗")
-
-  window.location.href='/'
+  if (error) {
+    alert("登入失敗：" + error.message)
+  } else {
+    window.location.href = "/"
+  }
 })
 </script>
 
