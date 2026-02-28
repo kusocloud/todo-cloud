@@ -112,7 +112,13 @@ const API = "/tasks";
 let touchTaskId = null;
 
 async function loadTasks() {
-  const res = await fetch(API, { credentials: "include" });
+  const { data: { session } } = await supabase.auth.getSession();
+
+  const res = await fetch(API, {
+    headers: {
+      Authorization: `Bearer ${session.access_token}`
+    }
+  });
   const tasks = await res.json();
 
   document.getElementById("todoList").innerHTML = "";

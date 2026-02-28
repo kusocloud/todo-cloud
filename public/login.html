@@ -30,6 +30,12 @@ const supabase = createClient(
   "sb_publishable_Oc7KChg0knc-osKuDrxNmQ_XWAyrGsm"
 );
 
+const { data: { user } } = await supabase.auth.getUser();
+
+if (!user) {
+  window.location.href = "/login.html";
+}
+
 const loginBtn = document.getElementById("loginBtn");
 const registerBtn = document.getElementById("registerBtn");
 
