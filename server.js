@@ -7,7 +7,10 @@ const { createClient } = require("@supabase/supabase-js")
 const app = express()
 app.use(express.json())
 app.use(cookieParser())
-app.use(express.static("public"))
+
+app.get("/health", (req, res) => {
+  res.status(200).json({ status: "ok" })
+})
 
 const SECRET = "todo_v4_secret"
 
@@ -126,6 +129,11 @@ app.delete("/tasks/:id", auth, async (req, res) => {
   res.json({})
 })
 
-app.listen(3000, () => {
-  console.log("http://localhost:3000")
+const PORT = process.env.PORT || 3000
+
+app.use(express.static("public"))
+
+
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`)
 })
