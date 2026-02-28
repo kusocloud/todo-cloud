@@ -266,8 +266,12 @@ document.querySelectorAll(".column").forEach(column => {
   });
 });
 
-
 loadTasks();
+
+window.addTask = addTask;
+window.updateStatus = updateStatus;
+window.deleteTask = deleteTask;
+window.logout = logout;
 </script>
 
 </body>
