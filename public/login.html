@@ -19,6 +19,7 @@ button { padding:8px 12px }
 <input id="password" type="password" placeholder="Password">
 
 <button id="loginBtn">登入</button>
+<button id="registerBtn">註冊</button>
 </div>
 
 <script type="module">
@@ -34,20 +35,44 @@ const form = document.querySelector("form")
 form.addEventListener("submit", async (e) => {
   e.preventDefault()
 
-  const email = document.getElementById("email").value
-  const password = document.getElementById("password").value
+  const email = document.getElementById(<script type="module">
+import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
+
+const supabase = createClient(
+  "https://uecxxpazkyfcrqswzbqm.supabase.co",
+  "sb_publishable_Oc7KChg0knc-osKuDrxNmQ_XWAyrGsm"
+);
+
+const loginBtn = document.getElementById("loginBtn");
+const registerBtn = document.getElementById("registerBtn");
+
+loginBtn.addEventListener("click", async () => {
+  const email = document.getElementById("email").value;
+  const password = document.getElementById("password").value;
 
   const { error } = await supabase.auth.signInWithPassword({
     email,
-    password,
-  })
+    password
+  });
 
-  if (error) {
-    alert("登入失敗：" + error.message)
-  } else {
-    window.location.href = "/"
-  }
-})
+  if (error) return alert(error.message);
+
+  window.location.href = "/";
+});
+
+registerBtn.addEventListener("click", async () => {
+  const email = document.getElementById("email").value;
+  const password = document.getElementById("password").value;
+
+  const { error } = await supabase.auth.signUp({
+    email,
+    password
+  });
+
+  if (error) return alert(error.message);
+
+  alert("註冊成功，請重新登入");
+});
 </script>
 
 </body>
