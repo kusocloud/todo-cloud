@@ -120,6 +120,9 @@ const API = "/tasks";
 let touchTaskId = null;
 
 async function loadTasks() {
+
+  console.log("SESSION:", session);
+
   const { data: { session } } = await supabase.auth.getSession();
 
   const res = await fetch(API, {
