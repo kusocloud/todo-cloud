@@ -1,45 +1,15 @@
-<!DOCTYPE html>
-<html>
-<head>
-<meta charset="UTF-8">
-<title>綠宣文創待辦事項登入頁面</title>
-<style>
-body { font-family: Arial; padding:40px; background:#f5f5f5 }
-.container { background:#fff; padding:30px; width:350px; border-radius:8px; }
-input { width:100%; padding:8px; margin:10px 0 }
-button { padding:8px 12px }
-</style>
-</head>
-<body>
-
-<div class="container">
-<h2>綠宣文創待辦事項登入頁面</h2>
-
-<input id="email" placeholder="Email">
-<input id="password" type="password" placeholder="Password">
-
-<button id="loginBtn">登入</button>
-<button id="registerBtn">註冊</button>
-</div>
-
 <script type="module">
 import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
 
 const supabase = createClient(
-  "https://uecxxpazkyfcrqswzbqm.supabase.co",
-  "sb_publishable_Oc7KChg0knc-osKuDrxNmQ_XWAyrGsm"
+  "你的URL",
+  "你的publishable key"
 );
-
-const { data: { user } } = await supabase.auth.getUser();
-
-if (!user) {
-  window.location.href = "/login.html";
-}
 
 const loginBtn = document.getElementById("loginBtn");
 const registerBtn = document.getElementById("registerBtn");
 
-loginBtn.addEventListener("click", async () => {
+loginBtn.onclick = async () => {
   const email = document.getElementById("email").value;
   const password = document.getElementById("password").value;
 
@@ -51,9 +21,9 @@ loginBtn.addEventListener("click", async () => {
   if (error) return alert(error.message);
 
   window.location.href = "/";
-});
+};
 
-registerBtn.addEventListener("click", async () => {
+registerBtn.onclick = async () => {
   const email = document.getElementById("email").value;
   const password = document.getElementById("password").value;
 
@@ -64,9 +34,6 @@ registerBtn.addEventListener("click", async () => {
 
   if (error) return alert(error.message);
 
-  alert("註冊成功，請重新登入");
-});
+  alert("註冊成功");
+};
 </script>
-
-</body>
-</html>

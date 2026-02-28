@@ -1,7 +1,6 @@
 require("dotenv").config();
 const express = require("express");
 const { createClient } = require("@supabase/supabase-js");
-const path = require("path");
 
 const app = express();
 app.use(express.json());
@@ -12,25 +11,23 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY
 );
 
-// ===== Supabase 驗證 Middleware =====
+// 驗證 middleware
 async function auth(req, res, next) {
   const authHeader = req.headers.authorization;
-  if (!authHeader) {
-    return res.status(401).json({ error: "未提供 token" });
-  }
+  if (!authHeader) return res.status(401).json({ error: "No token" });
 
   const token = authHeader.replace("Bearer ", "");
   const { data, error } = await supabase.auth.getUser(token);
 
   if (error || !data.user) {
-    return res.status(401).json({ error: "無效 token" });
+    return res.status(401).json({ error: "Invalid token" });
   }
 
   req.user = data.user;
   next();
 }
 
-// ===== 取得任務 =====
+// 取得任務
 app.get("/tasks", auth, async (req, res) => {
   const { data, error } = await supabase
     .from("tasks")
@@ -42,7 +39,7 @@ app.get("/tasks", auth, async (req, res) => {
   res.json(data);
 });
 
-// ===== 新增任務 =====
+// 新增
 app.post("/tasks", auth, async (req, res) => {
   const { content, priority, status, due_date } = req.body;
 
@@ -63,7 +60,7 @@ app.post("/tasks", auth, async (req, res) => {
   res.json(data[0]);
 });
 
-// ===== 更新任務 =====
+// 更新
 app.patch("/tasks/:id", auth, async (req, res) => {
   const { status } = req.body;
 
@@ -78,7 +75,7 @@ app.patch("/tasks/:id", auth, async (req, res) => {
   res.json(data[0]);
 });
 
-// ===== 刪除任務 =====
+// 刪除
 app.delete("/tasks/:id", auth, async (req, res) => {
   const { error } = await supabase
     .from("tasks")
@@ -90,7 +87,4 @@ app.delete("/tasks/:id", auth, async (req, res) => {
   res.json({ success: true });
 });
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log("Server running on port", PORT);
-});
+app.listen(process.env.PORT || 3000);
