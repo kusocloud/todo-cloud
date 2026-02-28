@@ -133,7 +133,7 @@ async function loadTasks() {
   tasks.forEach(task => {
     const div = document.createElement("div");
     const taskPriority = task.priority ? task.priority : "Low";
-    div.className = "card " + priority.toLowerCase();
+    div.className = "card " + taskPriority.toLowerCase();
     div.dataset.id = task.id;
 
     if (task.status === "Done") {
@@ -192,6 +192,7 @@ else if (status === "doing")
 else
   document.getElementById("doneList").appendChild(div);
   });
+}
 
 async function addTask() {
   const content = document.getElementById("content").value;
@@ -206,7 +207,7 @@ async function addTask() {
     credentials: "include",
     body: JSON.stringify({
       content,
-      priority,
+      priority: selectedPriority,
       status: "Todo",
       progress: 0,
       due_date: dueDate ? new Date(dueDate).toISOString() : null
