@@ -117,10 +117,6 @@ fetch("/me", { credentials: "include" })
   if (!res.ok) window.location.href = "/login.html";
 });
 
-async function logout() {
-  await fetch("/logout", { method: "POST", credentials: "include" });
-  window.location.href = "/login.html";
-}
 
 async function loadTasks() {
   const res = await fetch(API, { credentials: "include" });
@@ -229,6 +225,10 @@ async function updateStatus(id, status) {
   loadTasks();
 }
 
+async function logout() {
+  window.location.href = "/login.html";
+}
+
 async function deleteTask(id) {
   if (!confirm("確定要刪除嗎？")) return;
   await fetch(API + "/" + id, {
@@ -255,7 +255,7 @@ document.querySelectorAll(".column").forEach(column => {
     await updateStatus(taskId, newStatus);
   });
 });
-}
+
 
 loadTasks();
 </script>
