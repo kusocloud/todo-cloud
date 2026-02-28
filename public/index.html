@@ -111,25 +111,27 @@ button {
 
   import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
 
-  const supabase = createClient(
-    "https://uecxxpazkyfcrqswzbqm.supabase.co",
-    "sb_publishable_Oc7KChg0knc-osKuDrxNmQ_XWAyrGsm"
-  );
+const supabase = createClient(
+  "https://uecxxpazkyfcrqswzbqm.supabase.co",
+  "sb_publishable_Oc7KChg0knc-osKuDrxNmQ_XWAyrGsm"
+);
 
 const API = "/tasks";
 let touchTaskId = null;
 
 async function loadTasks() {
-
-
   const { data: { session } } = await supabase.auth.getSession();
-  console.log("SESSION:", session);
+  if (!session) {
+    window.location.href = "/login.html";
+    return;
+  }
 
   const res = await fetch(API, {
     headers: {
       Authorization: `Bearer ${session.access_token}`
     }
   });
+
   const tasks = await res.json();
 
   document.getElementById("todoList").innerHTML = "";
@@ -138,113 +140,87 @@ async function loadTasks() {
 
   tasks.forEach(task => {
     const div = document.createElement("div");
-    const taskPriority = task.priority ? task.priority : "Low";
-    div.className = "card " + taskPriority.toLowerCase();
+    div.className = "card";
     div.dataset.id = task.id;
-
-    if (task.status === "Done") {
-      div.classList.add("done");
-      div.draggable = false;
-    } else {
-      div.draggable = true;
-    }
-
-    div.addEventListener("dragstart", (e) => {
-      div.classList.add("dragging");
-      e.dataTransfer.setData("taskId", task.id);
-    });
-
-    div.addEventListener("dragend", () => {
-      div.classList.remove("dragging");
-    });
-
-    div.addEventListener("touchstart", () => {
-      touchTaskId = task.id;
-    });
-
-    div.addEventListener("touchend", async (e) => {
-      if (!touchTaskId) return;
-
-      const touch = e.changedTouches[0];
-      const element = document.elementFromPoint(touch.clientX, touch.clientY);
-      const column = element.closest(".column");
-
-      if (column) {
-        const newStatus = column.dataset.status;
-        await updateStatus(touchTaskId, newStatus);
-      }
-
-      touchTaskId = null;
-    });
+    div.draggable = true;
 
     div.innerHTML = `
-      <strong>${task.content || "(未命名任務)"}</strong><br>
+      <strong>${task.content}</strong><br>
       狀態: ${task.status}<br>
-      逾期: ${task.is_overdue ? '<span class="overdue">🔴 已逾期</span>' : '正常'}<br>
-      到期日: ${task.due_date ? new Date(task.due_date).toLocaleDateString() : "未設定"}<br>
-      完成時間: ${task.complete_time || "未完成"}<br>
-      <button onclick="updateStatus(${task.id}, 'Todo')">待辦中</button>
-      <button onclick="updateStatus(${task.id}, 'Doing')">進行中</button>
-      <button onclick="updateStatus(${task.id}, 'Done')">已完成</button>
-      <button onclick="deleteTask(${task.id})">刪除</button>
+      <button class="todoBtn">待辦中</button>
+      <button class="doingBtn">進行中</button>
+      <button class="doneBtn">已完成</button>
+      <button class="deleteBtn">刪除</button>
     `;
 
-    const status = task.status ? task.status.toLowerCase() : "todo";
+    div.querySelector(".todoBtn").addEventListener("click", () => updateStatus(task.id, "Todo"));
+    div.querySelector(".doingBtn").addEventListener("click", () => updateStatus(task.id, "Doing"));
+    div.querySelector(".doneBtn").addEventListener("click", () => updateStatus(task.id, "Done"));
+    div.querySelector(".deleteBtn").addEventListener("click", () => deleteTask(task.id));
 
-if (status === "todo")
-  document.getElementById("todoList").appendChild(div);
-else if (status === "doing")
-  document.getElementById("doingList").appendChild(div);
-else
-  document.getElementById("doneList").appendChild(div);
+    if (task.status === "Todo")
+      document.getElementById("todoList").appendChild(div);
+    else if (task.status === "Doing")
+      document.getElementById("doingList").appendChild(div);
+    else
+      document.getElementById("doneList").appendChild(div);
   });
 }
 
 async function addTask() {
   const content = document.getElementById("content").value;
-  const selectedPriority = document.getElementById("priority").value;
+  const priority = document.getElementById("priority").value;
   const dueDate = document.getElementById("dueDate").value;
 
-  if (!content) return alert("請輸入任務內容");
+  const { data: { session } } = await supabase.auth.getSession();
 
   await fetch(API, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
-    credentials: "include",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${session.access_token}`
+    },
     body: JSON.stringify({
       content,
-      priority: selectedPriority,
+      priority,
       status: "Todo",
-      progress: 0,
-      due_date: dueDate ? new Date(dueDate).toISOString() : null
+      due_date: dueDate || null
     })
   });
 
-  document.getElementById("content").value = "";
-  document.getElementById("dueDate").value = "";
   loadTasks();
 }
 
 async function updateStatus(id, status) {
+  const { data: { session } } = await supabase.auth.getSession();
+
   await fetch(API + "/" + id, {
     method: "PATCH",
-    headers: { "Content-Type": "application/json" },
-    credentials: "include",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${session.access_token}`
+    },
     body: JSON.stringify({ status })
   });
+
   loadTasks();
 }
 
 async function logout() {
+  await supabase.auth.signOut();
   window.location.href = "/login.html";
 }
 
 async function deleteTask(id) {
-  if (!confirm("確定要刪除嗎？")) return;
+  const { data: { session } } = await supabase.auth.getSession();
+
   await fetch(API + "/" + id, {
     method: "DELETE",
-    credentials: "include"
+    headers: {
+      Authorization: `Bearer ${session.access_token}`
+    }
   });
+
   loadTasks();
 }
 
