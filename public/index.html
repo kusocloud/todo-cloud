@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>ToDo待辦事項V3</title>
+
+<style>
+body {
+  font-family: Arial;
+  background: #f5f5f5;
+  padding: 20px;
+}
+
+.card {
+  background: white;
+  padding: 15px;
+  margin-bottom: 10px;
+  border-radius: 8px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  cursor: grab;
+  transition: transform 0.2s;
+}
+
+.card.dragging {
+  opacity: 0.6;
+  transform: scale(1.05);
+}
+
+.high { border-left: 5px solid red; }
+.medium { border-left: 5px solid orange; }
+.low { border-left: 5px solid green; }
+
+button {
+  padding: 5px 10px;
+  margin-top: 5px;
+}
+
+.done {
+  opacity: 0.5;
+  text-decoration: line-through;
+  cursor: default;
+}
+
+.overdue {
+  color: red;
+  font-weight: bold;
+}
+
+.board {
+  display: flex;
+  gap: 20px;
+}
+
+.column {
+  flex: 1;
+  background: #eee;
+  padding: 10px;
+  border-radius: 10px;
+  min-height: 400px;
+  transition: background 0.2s;
+}
+
+.column.drag-over {
+  background: #dfefff;
+}
+
+.column h2 {
+  text-align: center;
+}
+</style>
+</head>
+
+<body>
+
+<h1>📋 ToDo待辦事項V3</h1>
+<button onclick="logout()">登出</button>
+
+<div>
+  <input id="content" placeholder="任務內容" required>
+  <select id="priority">
+    <option value="High">High</option>
+    <option value="Medium">Medium</option>
+    <option value="Low">Low</option>
+  </select>
+  <input type="date" id="dueDate">
+  <button onclick="addTask()">新增</button>
+</div>
+
+<hr>
+
+<div class="board">
+
+  <div class="column" data-status="Todo">
+    <h2>待辦事項</h2>
+    <div id="todoList"></div>
+  </div>
+
+  <div class="column" data-status="Doing">
+    <h2>進行中</h2>
+    <div id="doingList"></div>
+  </div>
+
+  <div class="column" data-status="Done">
+    <h2>已完成</h2>
+    <div id="doneList"></div>
+  </div>
+
+</div>
+
+<script>
+const API = "/tasks";
+let touchTaskId = null;
+
+// 驗證登入
+fetch("/me", { credentials: "include" })
+.then(res => {
+  if (!res.ok) window.location.href = "/login.html";
+});
+
+async function logout() {
+  await fetch("/logout", { method: "POST", credentials: "include" });
+  window.location.href = "/login.html";
+}
+
+async function loadTasks() {
+  const res = await fetch(API, { credentials: "include" });
+  const tasks = await res.json();
+
+  document.getElementById("todoList").innerHTML = "";
+  document.getElementById("doingList").innerHTML = "";
+  document.getElementById("doneList").innerHTML = "";
+
+  tasks.forEach(task => {
+    const div = document.createElement("div");
+    const priority = task.priority ? task.priority : "Low";
+    const priority = task.priority ? task.priority : "Low";
+div.className = "card " + priority.toLowerCase();
+div.dataset.id = task.id;
+
+    if (task.status === "Done") {
+      div.classList.add("done");
+      div.draggable = false;
+    } else {
+      div.draggable = true;
+    }
+
+    div.addEventListener("dragstart", (e) => {
+      div.classList.add("dragging");
+      e.dataTransfer.setData("taskId", task.id);
+    });
+
+    div.addEventListener("dragend", () => {
+      div.classList.remove("dragging");
+    });
+
+    div.addEventListener("touchstart", () => {
+      touchTaskId = task.id;
+    });
+
+    div.addEventListener("touchend", async (e) => {
+      if (!touchTaskId) return;
+
+      const touch = e.changedTouches[0];
+      const element = document.elementFromPoint(touch.clientX, touch.clientY);
+      const column = element.closest(".column");
+
+      if (column) {
+        const newStatus = column.dataset.status;
+        await updateStatus(touchTaskId, newStatus);
+      }
+
+      touchTaskId = null;
+    });
+
+    div.innerHTML = `
+      <strong>${task.content || "(未命名任務)"}</strong><br>
+      狀態: ${task.status}<br>
+      逾期: ${task.is_overdue ? '<span class="overdue">🔴 已逾期</span>' : '正常'}<br>
+      到期日: ${task.due_date ? new Date(task.due_date).toLocaleDateString() : "未設定"}<br>
+      完成時間: ${task.complete_time || "未完成"}<br>
+      <button onclick="updateStatus(${task.id}, 'Todo')">待辦中</button>
+      <button onclick="updateStatus(${task.id}, 'Doing')">進行中</button>
+      <button onclick="updateStatus(${task.id}, 'Done')">已完成</button>
+      <button onclick="deleteTask(${task.id})">刪除</button>
+    `;
+
+    const status = task.status ? task.status.toLowerCase() : "todo";
+
+if (status === "todo")
+  document.getElementById("todoList").appendChild(div);
+else if (status === "doing")
+  document.getElementById("doingList").appendChild(div);
+else
+  document.getElementById("doneList").appendChild(div);
+  });
+}
+
+async function addTask() {
+  const content = document.getElementById("content").value;
+  const priority = document.getElementById("priority").value;
+  const dueDate = document.getElementById("dueDate").value;
+
+  if (!content) return alert("請輸入任務內容");
+
+  await fetch(API, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify({
+      content,
+      priority,
+      status: "Todo",
+      progress: 0,
+      due_date: dueDate ? new Date(dueDate).toISOString() : null
+    })
+  });
+
+  document.getElementById("content").value = "";
+  document.getElementById("dueDate").value = "";
+  loadTasks();
+}
+
+async function updateStatus(id, status) {
+  await fetch(API + "/" + id, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify({ status })
+  });
+  loadTasks();
+}
+
+async function deleteTask(id) {
+  if (!confirm("確定要刪除嗎？")) return;
+  await fetch(API + "/" + id, {
+    method: "DELETE",
+    credentials: "include"
+  });
+  loadTasks();
+}
+
+document.querySelectorAll(".column").forEach(column => {
+  column.addEventListener("dragover", (e) => {
+    e.preventDefault();
+    column.classList.add("drag-over");
+  });
+
+  column.addEventListener("dragleave", () => {
+    column.classList.remove("drag-over");
+  });
+
+  column.addEventListener("drop", async (e) => {
+    column.classList.remove("drag-over");
+    const taskId = e.dataTransfer.getData("taskId");
+    const newStatus = column.dataset.status;
+    await updateStatus(taskId, newStatus);
+  });
+});
+
+loadTasks();
+</script>
+
+</body>
+</html>

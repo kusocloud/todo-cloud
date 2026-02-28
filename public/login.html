@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>綠宣文創待辦事項登入頁面</title>
+<style>
+body { font-family: Arial; padding:40px; background:#f5f5f5 }
+.container { background:#fff; padding:30px; width:350px; border-radius:8px; }
+input { width:100%; padding:8px; margin:10px 0 }
+button { padding:8px 12px }
+</style>
+</head>
+<body>
+
+<div class="container">
+<h2>綠宣文創待辦事項登入頁面</h2>
+
+<input id="email" placeholder="Email">
+<input id="password" type="password" placeholder="Password">
+
+<button id="loginBtn">登入</button>
+</div>
+
+<script>
+async function checkLogin() {
+  const res = await fetch('/me', { credentials: 'include' })
+  if (res.ok) window.location.href = '/'
+}
+checkLogin()
+
+document.getElementById("loginBtn").addEventListener("click", async () => {
+  const email = document.getElementById("email").value
+  const password = document.getElementById("password").value
+
+  const res = await fetch('/login', {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    credentials:'include',
+    body:JSON.stringify({email,password})
+  })
+
+  if(!res.ok) return alert("登入失敗")
+
+  window.location.href='/'
+})
+</script>
+
+</body>
+</html>
