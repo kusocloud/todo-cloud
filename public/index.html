@@ -107,7 +107,15 @@ button {
 
 </div>
 
-<script>
+<script type="module">
+
+  import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
+
+  const supabase = createClient(
+    "https://uecxxpazkyfcrqswzbqm.supabase.co",
+    "sb_publishable_Oc7KChg0knc-osKuDrxNmQ_XWAyrGsm"
+  );
+
 const API = "/tasks";
 let touchTaskId = null;
 
