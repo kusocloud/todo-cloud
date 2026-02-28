@@ -111,13 +111,6 @@ button {
 const API = "/tasks";
 let touchTaskId = null;
 
-// 驗證登入
-fetch("/me", { credentials: "include" })
-.then(res => {
-  if (!res.ok) window.location.href = "/login.html";
-});
-
-
 async function loadTasks() {
   const res = await fetch(API, { credentials: "include" });
   const tasks = await res.json();
